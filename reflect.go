@@ -68,6 +68,11 @@ func getStack(skip int) string {
 			break
 		}
 	}
+
+	if len(trace) == 0 {
+		return ""
+	}
+
 	return trace[1:]
 }
 
