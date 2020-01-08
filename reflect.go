@@ -78,7 +78,7 @@ func getStack(skip int) string {
 
 func isInternal(v string) bool {
 	c := strings.Contains
-	return c(v, "/go/src/testing/testing.go") || c(v, "/go/src/reflect/value.go") || c(v, "github.com/yehan2002/is/is.go") || c(v, "go/src/runtime/")
+	return c(v, "/go/src/testing/testing.go") || c(v, "github.com/yehan2002/is/")
 }
 
 func captureStdout() func() string {
