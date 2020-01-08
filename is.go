@@ -15,6 +15,11 @@ func New(t *testing.T) IS {
 	return &baseTest{t: t, fail: basicFailable}
 }
 
+//NoColor disables color
+func NoColor() {
+	noColorFlag = true
+}
+
 //IS a test
 type IS interface {
 	Equal(v1, v2 interface{}) IS
@@ -43,7 +48,7 @@ type baseTest struct {
 //Equal tests if the given values are equal
 func (i *baseTest) Equal(v1, v2 interface{}) IS {
 	if !reflect.DeepEqual(v1, v2) {
-		i.fail(i.t, nil, fmt.Sprintf("%#v is not equal to %#v", v1, v2), true)
+		i.fail(i.t, nil, fmt.Sprintf("%#v(%s) is not equal to %#v(%s)", v1, reflect.TypeOf(v1), v2, reflect.TypeOf(v2)), true)
 	}
 	return i
 }
@@ -150,17 +155,19 @@ func (i *baseTest) Fail(msg interface{}) {
 }
 
 func basicFailable(t *testing.T, msg interface{}, test interface{}, comment bool) {
+	if test != nil {
+		fmt.Printf("--- FAIL: %s\n", test)
+	}
+
 	if msg != nil {
-		fmt.Printf("--- FAIL: %s\n", msg)
+		fmt.Printf("--- Error: %s\n", msg)
 	}
 	if comment {
 		if c, ok := getComment(); ok {
-			fmt.Printf("--- FAIL: %s\n", c)
+			fmt.Printf("--- Error: %s\n", c)
 		}
 	}
-	if test != nil {
-		fmt.Printf("--- Error: %s\n", test)
-	}
+
 	fmt.Println(getStack(3))
 	t.FailNow()
 }

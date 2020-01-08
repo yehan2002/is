@@ -158,29 +158,30 @@ func (t *testSuite) teardownTests(value reflect.Value) {
 
 func (t *testSuite) fail(_ *testing.T, msg interface{}, test interface{}, comment bool) {
 	t.passed = false
+	if test != nil {
+		if noColorFlag {
+			fmt.Printf("--- Fail: %s\n", test)
+		} else {
+			fmt.Printf("\x1b[31m--- Fail: %s\x1b[0m\n", test)
+		}
+	}
 	if msg != nil {
 		if noColorFlag {
-			fmt.Printf("--- Fail: %s\n", msg)
+			fmt.Printf("--- Error: %s\n", msg)
 		} else {
-			fmt.Printf("\x1b[31m--- Fail: %s\x1b[0m\n", msg)
+			fmt.Printf("\x1b[31m--- Error: %s\x1b[0m\n", msg)
 		}
 	}
 	if comment {
 		if c, ok := getComment(); ok {
 			if noColorFlag {
-				fmt.Printf("--- Fail: %s\n", c)
+				fmt.Printf("--- Error: %s\n", c)
 			} else {
-				fmt.Printf("\x1b[31m--- Fail: %s\x1b[0m\n", c)
+				fmt.Printf("\x1b[31m--- Error: %s\x1b[0m\n", c)
 			}
 		}
 	}
-	if test != nil {
-		if noColorFlag {
-			fmt.Printf("--- Error: %s\n", test)
-		} else {
-			fmt.Printf("\x1b[31m--- Error: %s\x1b[0m\n", test)
-		}
-	}
+
 	fmt.Println(getStack(3))
 	t.testChan <- false
 	runtime.Goexit()
