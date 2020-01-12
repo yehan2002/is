@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 )
 
 //maxStackLength the maximum amount of stack frames to read
@@ -55,15 +56,13 @@ func getComment() (comment string, ok bool) {
 func getStack(skip int) string {
 	stackBuf := make([]uintptr, maxStackLength)
 	length := runtime.Callers(skip+1, stackBuf[:])
-	stack := stackBuf[:length]
+	stack := skipInternal(stackBuf[:length])
 
 	trace := ""
 	frames := runtime.CallersFrames(stack)
 	for {
 		frame, more := frames.Next()
-		if !isInternal(frame.File) {
-			trace = trace + fmt.Sprintf("\n%s() \n\t%s:%d", frame.Function, frame.File, frame.Line)
-		}
+		trace = trace + fmt.Sprintf("\n%s() \n\t%s:%d", frame.Function, frame.File, frame.Line)
 		if !more {
 			break
 		}
@@ -76,9 +75,27 @@ func getStack(skip int) string {
 	return trace[1:]
 }
 
+func skipInternal(v []uintptr) []uintptr {
+	pos := 0
+	frames := runtime.CallersFrames(v)
+	for {
+		pos++
+		frame, more := frames.Next()
+		if isInternal(frame.File) {
+			v = v[:pos-3]
+			break
+		}
+		if !more {
+			break
+		}
+
+	}
+	return v
+}
+
 func isInternal(v string) bool {
 	c := strings.Contains
-	return c(v, "/go/src/testing/testing.go") || c(v, "github.com/yehan2002/is/")
+	return c(v, "github.com/yehan2002/is/")
 }
 
 func captureStdout() func() string {
@@ -99,10 +116,11 @@ func captureStdout() func() string {
 			fin <- nil
 		}()
 		return func() string {
+			time.Sleep(time.Millisecond * 5)
 			os.Stdout = old
 			stdoutMux.Unlock()
-			r.Close()
 			w.Close()
+			r.Close()
 			<-fin
 			return buf.String()
 		}

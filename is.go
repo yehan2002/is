@@ -48,7 +48,11 @@ type baseTest struct {
 //Equal tests if the given values are equal
 func (i *baseTest) Equal(v1, v2 interface{}) IS {
 	if !reflect.DeepEqual(v1, v2) {
-		i.fail(i.t, nil, fmt.Sprintf("%#v(%s) is not equal to %#v(%s)", v1, reflect.TypeOf(v1), v2, reflect.TypeOf(v2)), true)
+		if reflect.TypeOf(v1) != reflect.TypeOf(v2) {
+			i.fail(i.t, nil, fmt.Sprintf("%#v(%s) is not equal to %#v(%s)", v1, reflect.TypeOf(v1), v2, reflect.TypeOf(v2)), true)
+		} else {
+			i.fail(i.t, nil, fmt.Sprintf("%#v is not equal to %#v", v1, v2), true)
+		}
 	}
 	return i
 }
@@ -151,7 +155,7 @@ func (i *baseTest) FalseM(v bool, msg string) IS {
 
 //Fail fail the test immediately
 func (i *baseTest) Fail(msg interface{}) {
-	i.fail(i.t, msg, "", false)
+	i.fail(i.t, msg, nil, false)
 }
 
 func basicFailable(t *testing.T, msg interface{}, test interface{}, comment bool) {
