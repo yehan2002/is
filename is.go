@@ -47,20 +47,16 @@ type baseTest struct {
 
 //Equal tests if the given values are equal
 func (i *baseTest) Equal(v1, v2 interface{}) IS {
-	if !reflect.DeepEqual(v1, v2) {
-		if reflect.TypeOf(v1) != reflect.TypeOf(v2) {
-			i.fail(i.t, nil, fmt.Sprintf("%#v(%s) is not equal to %#v(%s)", v1, reflect.TypeOf(v1), v2, reflect.TypeOf(v2)), true)
-		} else {
-			i.fail(i.t, nil, fmt.Sprintf("%#v is not equal to %#v", v1, v2), true)
-		}
+	if eq, err := deepEqual(v1, v2); !eq {
+		i.fail(i.t, nil, fmt.Sprint(err), true)
 	}
 	return i
 }
 
 //EqualM like `Equal` but with a message
 func (i *baseTest) EqualM(v1, v2 interface{}, msg string) IS {
-	if !reflect.DeepEqual(v1, v2) {
-		i.fail(i.t, msg, fmt.Sprintf("%#v is not equal to %#v", v1, v2), false)
+	if eq, err := deepEqual(v1, v2); !eq {
+		i.fail(i.t, msg, fmt.Sprint(err), false)
 	}
 	return i
 }

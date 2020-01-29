@@ -82,7 +82,9 @@ func skipInternal(v []uintptr) []uintptr {
 		pos++
 		frame, more := frames.Next()
 		if isInternal(frame.File) {
-			v = v[:pos-3]
+			if pos > 2 {
+				v = v[:pos-3]
+			}
 			break
 		}
 		if !more {
