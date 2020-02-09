@@ -156,15 +156,15 @@ func (i *baseTest) Fail(msg interface{}) {
 
 func basicFailable(t *testing.T, msg interface{}, test interface{}, comment bool) {
 	if test != nil {
-		fmt.Printf("--- FAIL: %s\n", test)
+		printf(messages.err2, true, test)
 	}
 
 	if msg != nil {
-		fmt.Printf("--- Error: %s\n", msg)
+		printf(messages.err1, true, msg)
 	}
 	if comment {
 		if c, ok := getComment(); ok {
-			fmt.Printf("--- Error: %s\n", c)
+			printf(messages.err1, true, c)
 		}
 	}
 

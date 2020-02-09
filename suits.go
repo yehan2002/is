@@ -30,15 +30,17 @@ func Suite(t *testing.T, v interface{}) {
 		panic("The provided suite is nil")
 	}
 
-	if noColorFlag {
-		fmt.Printf("****** Running %s ******\n", reflect.TypeOf(v).Name())
-	} else {
-		fmt.Printf("\x1b[1;36m****** Running %s ******\x1b[0m\n", reflect.TypeOf(v).Name())
-	}
-
 	is := &baseTest{t: t}
 	isr := reflect.ValueOf(is)
-	s := &testSuite{is: is, isr: isr, passed: true, testChan: make(chan bool, 1), t: t, name: reflect.TypeOf(v).Name()}
+	s := &testSuite{is: is, isr: isr, passed: true, testChan: make(chan bool, 1), t: t}
+
+	if reflect.TypeOf(v).Kind() == reflect.Ptr {
+		s.name = reflect.TypeOf(v).Elem().Name()
+	} else {
+		s.name = reflect.TypeOf(v).Name()
+	}
+	printf(messages.start, true, s.name)
+
 	is.fail = s.fail
 	var suite, suitePtr reflect.Value
 
@@ -54,11 +56,7 @@ func Suite(t *testing.T, v interface{}) {
 	s.callTests(suitePtr)
 	s.teardownTests(suitePtr)
 
-	if noColorFlag {
-		fmt.Printf("****** %s Passed ******\n", s.name)
-	} else {
-		fmt.Printf("\x1b[1;36m****** %s Passed ******\x1b[0m\n", s.name)
-	}
+	printf(messages.passSuite, true, s.name)
 }
 
 type testSuite struct {
@@ -68,6 +66,7 @@ type testSuite struct {
 	testChan chan bool
 	t        *testing.T
 	name     string
+	color    bool
 }
 
 func (t *testSuite) callTests(value reflect.Value) {
@@ -87,37 +86,19 @@ func (t *testSuite) callTest(method reflect.Method, value reflect.Value) {
 
 	now := time.Now()
 	if testing.Verbose() || true {
-		if noColorFlag {
-			fmt.Printf("Running %s", method.Name)
-		} else {
-			fmt.Printf("\x1b[36mRunning %s\x1b[0m", method.Name)
-		}
+		printf(messages.run, true, method.Name)
 	}
 	stdout := captureStdout()
 	if t.callTestFunc(method, value) && t.passed {
-		stdout() // ignore stdout since the test passed
 		if testing.Verbose() || true {
-			if noColorFlag {
-				fmt.Printf(" -- PASS \xf0\x9f\x97\xb8 (%.2fs)\n", time.Now().Sub(now).Seconds())
-			} else {
-				fmt.Printf("\x1b[36m -- \x1b[32mPASS \xf0\x9f\x97\xb8 (%.2fs)\x1b[0m\n", time.Now().Sub(now).Seconds())
-			}
+			stdout() // ignore stdout since the test passed
+			printf(messages.passTest, true, time.Now().Sub(now).Seconds())
 		}
 	} else {
 		buf := stdout()
-		if testing.Verbose() || true {
-			if noColorFlag {
-				fmt.Printf(" -- FAIL \xc3\x97 (%.2fs)\n", time.Now().Sub(now).Seconds())
-			} else {
-				fmt.Printf("\x1b[36m -- \x1b[31mFAIL \xc3\x97 (%.2fs)\x1b[0m\n", time.Now().Sub(now).Seconds())
-			}
-		}
+		printf(messages.failTest, true, time.Now().Sub(now).Seconds())
 		fmt.Println(buf)
-		if noColorFlag {
-			fmt.Printf("****** %s Failed ******\n", t.name)
-		} else {
-			fmt.Printf("\x1b[1;36m****** %s Failed ******\x1b[0m\n", t.name)
-		}
+		printf(messages.failSuite, true, t.name)
 		t.t.FailNow()
 	}
 
@@ -159,26 +140,14 @@ func (t *testSuite) teardownTests(value reflect.Value) {
 func (t *testSuite) fail(_ *testing.T, msg interface{}, test interface{}, comment bool) {
 	t.passed = false
 	if test != nil {
-		if noColorFlag {
-			fmt.Printf("--- Fail: %s\n", test)
-		} else {
-			fmt.Printf("\x1b[31m--- Fail: %s\x1b[0m\n", test)
-		}
+		printf(messages.err2, true, test)
 	}
 	if msg != nil {
-		if noColorFlag {
-			fmt.Printf("--- Error: %s\n", msg)
-		} else {
-			fmt.Printf("\x1b[31m--- Error: %s\x1b[0m\n", msg)
-		}
+		printf(messages.err1, true, messages)
 	}
 	if comment {
 		if c, ok := getComment(); ok {
-			if noColorFlag {
-				fmt.Printf("--- Error: %s\n", c)
-			} else {
-				fmt.Printf("\x1b[31m--- Error: %s\x1b[0m\n", c)
-			}
+			printf(messages.err1, true, c)
 		}
 	}
 
