@@ -143,7 +143,7 @@ func (t *testSuite) fail(_ *testing.T, msg interface{}, test interface{}, commen
 		printf(messages.err2, true, test)
 	}
 	if msg != nil {
-		printf(messages.err1, true, messages)
+		printf(messages.err1, true, msg)
 	}
 	if comment {
 		if c, ok := getComment(); ok {
