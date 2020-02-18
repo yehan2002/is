@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+type panicable func()
+
 type failable func(t *testing.T, msg interface{}, test interface{}, comment bool)
 
 // IS is a package for writing tests
@@ -33,7 +35,8 @@ type IS interface {
 	NilM(v1 interface{}, msg string) IS
 
 	MustPanic()
-	MustPanicCall(funct interface{}, args ...interface{})
+	MustPanicCall(panicable)
+	MustPanicCallReflect(funct interface{}, args ...interface{})
 
 	Err(v1 interface{}) IS
 	True(v bool) IS
@@ -159,7 +162,12 @@ func (i *baseTest) MustPanic() {
 	}
 }
 
-func (i *baseTest) MustPanicCall(funct interface{}, args ...interface{}) {
+func (i *baseTest) MustPanicCall(p panicable) {
+	defer i.MustPanic()
+	p()
+}
+
+func (i *baseTest) MustPanicCallReflect(funct interface{}, args ...interface{}) {
 	funcType := reflect.TypeOf(funct)
 	if funcType.Kind() != reflect.Func {
 		panic("`funct` is not a function")
