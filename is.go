@@ -32,6 +32,9 @@ type IS interface {
 	Nil(v1 interface{}) IS
 	NilM(v1 interface{}, msg string) IS
 
+	MustPanic()
+	MustPanicCall(funct interface{}, args ...interface{})
+
 	Err(v1 interface{}) IS
 	True(v bool) IS
 	False(v bool) IS
@@ -147,6 +150,41 @@ func (i *baseTest) FalseM(v bool, msg string) IS {
 		i.fail(i.t, msg, "expected value to be false", false)
 	}
 	return i
+}
+
+//MustPanic tests if the code panics
+func (i *baseTest) MustPanic() {
+	if r := recover(); r == nil {
+		i.fail(i.t, nil, "expected a panic", true)
+	}
+}
+
+func (i *baseTest) MustPanicCall(funct interface{}, args ...interface{}) {
+	funcType := reflect.TypeOf(funct)
+	if funcType.Kind() != reflect.Func {
+		panic("`funct` is not a function")
+	}
+	if funcType.NumIn() != len(args) {
+		panic("Invalid number of args")
+	}
+
+	rArgs := make([]reflect.Value, len(args))
+	for i, arg := range args {
+		rArgs[i] = reflect.ValueOf(arg)
+		if !rArgs[i].IsValid() {
+			panic("untyped nil provided as arg")
+		}
+		if funcType.In(i) != rArgs[i].Type() {
+			panic("cannot assign " + funcType.In(i).String() + " to " + rArgs[i].Type().String())
+		}
+	}
+	funcValue := reflect.ValueOf(funct)
+	if !funcValue.IsValid() {
+		panic("invalid function provided")
+	}
+
+	defer i.MustPanic()
+	funcValue.Call(rArgs)
 }
 
 //Fail fail the test immediately
