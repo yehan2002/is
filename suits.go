@@ -1,28 +1,12 @@
 package is
 
 import (
-	"flag"
 	"fmt"
-	"os"
 	"reflect"
-	"runtime"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 )
-
-var noColorFlag bool
-
-func init() {
-	envNoColor := os.Getenv("NO_COLOR") == "true"
-	flag.BoolVar(&noColorFlag, "nocolor", envNoColor, "turns off colors")
-}
-
-//isType the reflect.Type of `IS`
-var isType = reflect.TypeOf((*IS)(nil)).Elem()
-
-var stdoutMux = &sync.Mutex{}
 
 //Suite runs a test suite
 func Suite(t *testing.T, v interface{}) {
@@ -135,23 +119,4 @@ func (t *testSuite) teardownTests(value reflect.Value) {
 		}
 		method.Func.Call([]reflect.Value{value})
 	}
-}
-
-func (t *testSuite) fail(_ *testing.T, msg interface{}, test interface{}, comment bool) {
-	t.passed = false
-	if test != nil {
-		printf(messages.err2, true, test)
-	}
-	if msg != nil {
-		printf(messages.err1, true, msg)
-	}
-	if comment {
-		if c, ok := getComment(); ok {
-			printf(messages.err1, true, c)
-		}
-	}
-
-	fmt.Println(getStack(3))
-	t.testChan <- false
-	runtime.Goexit()
 }

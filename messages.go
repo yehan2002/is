@@ -1,6 +1,12 @@
 package is
 
-import "fmt"
+import (
+	"flag"
+	"fmt"
+	"os"
+)
+
+var noColorFlag bool
 
 var messages = struct {
 	start, run, passSuite, failSuite, passTest, failTest, err1, err2 *message
@@ -25,4 +31,14 @@ func printf(m *message, color bool, v ...interface{}) {
 	} else {
 		fmt.Printf(m.normal, v...)
 	}
+}
+
+//NoColor disables color
+func NoColor() {
+	noColorFlag = true
+}
+
+func init() {
+	envNoColor := os.Getenv("NO_COLOR") == "true"
+	flag.BoolVar(&noColorFlag, "nocolor", envNoColor, "turns off colors")
 }

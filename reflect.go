@@ -7,8 +7,11 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
+
+var stdoutMux = &sync.Mutex{}
 
 //maxStackLength the maximum amount of stack frames to read
 const maxStackLength = 50
@@ -50,6 +53,7 @@ func getComment() (comment string, ok bool) {
 		}
 		i++
 	}
+
 	return "", false
 }
 
