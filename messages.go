@@ -39,6 +39,6 @@ func NoColor() {
 }
 
 func init() {
-	envNoColor := os.Getenv("NO_COLOR") == "true"
-	flag.BoolVar(&noColorFlag, "nocolor", envNoColor, "turns off colors")
+	envNoColor := os.Getenv("COLOR_TEST") == "true"
+	flag.BoolVar(&noColorFlag, "nocolor", !envNoColor, "turns off colors")
 }
