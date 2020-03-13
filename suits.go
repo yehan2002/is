@@ -8,7 +8,10 @@ import (
 	"time"
 )
 
-//Suite runs a test suite
+//Suite runs a test suite.
+//If the suite contains a method named `Setup` it is called before any tests are run.
+//Tests must start with `Test` and take `is.IS` as the first arg.
+//Finally after all the tests are called `Teardown` is called
 func Suite(t *testing.T, v interface{}) {
 	if v == nil {
 		panic("The provided suite is nil")

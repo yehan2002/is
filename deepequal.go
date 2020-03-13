@@ -1,7 +1,3 @@
-// Copyright 2009 The Go Authors. All rights reserved.
-
-// Deep equality test via reflection
-
 package is
 
 import (

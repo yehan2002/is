@@ -11,7 +11,8 @@ type baseTest struct {
 	fail failable
 }
 
-//Equal tests if the given values are equal
+//Equal tests if the given values are equal.
+//Struct fields with the tag `is:"-"` are ignored
 func (i *baseTest) Equal(v1, v2 interface{}) IS {
 	if eq, err := deepEqual(v1, v2); !eq {
 		i.fail(i.t, nil, fmt.Sprint(err), true)
@@ -67,7 +68,7 @@ func (i *baseTest) Nil(v1 interface{}) IS {
 	return i
 }
 
-//Nil tests if the given value is nil
+//Nil like `Nil` but with a message
 func (i *baseTest) NilM(v1 interface{}, msg string) IS {
 	if v1 != nil {
 		i.fail(i.t, msg, "value is not nil", false)
@@ -91,7 +92,7 @@ func (i *baseTest) True(v bool) IS {
 	return i
 }
 
-//True tests if the given expression is true
+//TrueM like `True` but with a message
 func (i *baseTest) TrueM(v bool, msg string) IS {
 	if !v {
 		i.fail(i.t, msg, "expected value to be true", false)
@@ -107,7 +108,7 @@ func (i *baseTest) False(v bool) IS {
 	return i
 }
 
-//False tests if the given expression is false
+//FalseM like `False` but with a message
 func (i *baseTest) FalseM(v bool, msg string) IS {
 	if v {
 		i.fail(i.t, msg, "expected value to be false", false)
