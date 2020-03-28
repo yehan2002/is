@@ -63,7 +63,6 @@ func TestLoader(t *testing.T){
 * IS.MustPanicCallReflect - Calls the given function with the given args and fails if it does not panic
 * IS.Fail - Fails the test with the given message
 
-
 ## Color
 
 `Is` defaults to not using color unless the `COLOR_TEST` is set to `true`
