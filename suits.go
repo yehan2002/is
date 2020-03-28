@@ -70,17 +70,18 @@ func (t *testSuite) callTests(value reflect.Value) {
 }
 
 func (t *testSuite) callTest(method reflect.Method, value reflect.Value) {
-
 	now := time.Now()
-	if testing.Verbose() || true {
+	if testing.Verbose() {
 		printf(messages.run, true, method.Name)
 	}
 	stdout := captureStdout()
 	if t.callTestFunc(method, value) && t.passed {
-		if testing.Verbose() || true {
-			stdout() // ignore stdout since the test passed
-			printf(messages.passTest, true, time.Now().Sub(now).Seconds())
+		buf := stdout()
+		if testing.Verbose() { // ignore stdout since the test passed
+			fmt.Println(buf)
 		}
+
+		printf(messages.passTest, true, time.Now().Sub(now).Seconds())
 	} else {
 		buf := stdout()
 		printf(messages.failTest, true, time.Now().Sub(now).Seconds())
