@@ -131,7 +131,7 @@ func (eq *equalCheck) visit(v1, v2 reflect.Value) bool {
 func (eq *equalCheck) deepValueEqual(v1, v2 reflect.Value, path *path) bool {
 	if !v1.IsValid() || !v2.IsValid() {
 		if v1.IsValid() != v2.IsValid() {
-			eq.err = fmt.Errorf("Values are not equal\n%s: One value is zero (untyped nil)", path.string())
+			eq.err = fmt.Errorf("Values are not equal\n%s: One value is invalid (untyped nil)", path.string())
 			return false
 		}
 		return true
