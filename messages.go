@@ -26,6 +26,9 @@ type message struct {
 }
 
 func printf(m *message, color bool, v ...interface{}) {
+	if !flag.Parsed() {
+		flag.Parse()
+	}
 	if color && !noColorFlag {
 		fmt.Printf(m.color, v...)
 	} else {
