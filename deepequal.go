@@ -7,6 +7,17 @@ import (
 	"unsafe"
 )
 
+const (
+	eqNil = iota
+	eqValZero
+	eqChannel
+	eqNotEqual
+	eqDiffTypes
+	eqDiffLenArray
+	eqDiffLenSlice
+	eqIncomparable
+)
+
 type visit struct {
 	a1  unsafe.Pointer
 	a2  unsafe.Pointer
@@ -52,8 +63,11 @@ func (p *path) string() string {
 		if !first && strings.Index(s, "[") != 0 {
 			sb.WriteRune('.')
 		}
+		if first {
+			sb.WriteString(": ")
+			first = false
+		}
 		sb.WriteString(s)
-		first = false
 	}
 	return sb.String()
 }
@@ -88,10 +102,12 @@ func (eq *equalCheck) unsafeEqual(v1, v2 reflect.Value, path *path) (isEq bool) 
 	case reflect.UnsafePointer:
 		uv1 = v1.Pointer()
 		uv2 = v2.Pointer()
+	default:
+		eq.err = eq.equalityError(path, eqIncomparable, v1.Kind()) //should not happen
+		return false
 	}
-
 	if uv1 != uv2 {
-		eq.err = fmt.Errorf("Values are not equal\n%s: '%v' is not equal to '%v'", path.string(), uv1, uv2)
+		eq.err = eq.equalityError(path, eqNotEqual, uv1, uv2)
 		return false
 	}
 	return true
@@ -126,37 +142,32 @@ func (eq *equalCheck) visit(v1, v2 reflect.Value) bool {
 		}
 	}
 	return false
-
 }
 func (eq *equalCheck) deepValueEqual(v1, v2 reflect.Value, path *path) bool {
 	if !v1.IsValid() || !v2.IsValid() {
 		if v1.IsValid() != v2.IsValid() {
-			eq.err = fmt.Errorf("Values are not equal\n%s: One value is invalid (untyped nil)", path.string())
+			eq.err = eq.equalityError(path, eqValZero)
 			return false
 		}
 		return true
 	}
 	if v1.Type() != v2.Type() {
-		eq.err = fmt.Errorf("Values are not equal\n%s: Different types '%s' and '%s'", path.string(), v1.Type(), v2.Type())
+		eq.err = eq.equalityError(path, eqDiffTypes, v1.Type(), v2.Type())
 		return false
 	}
 	if isNil(v1) != isNil(v2) {
-		eq.err = fmt.Errorf("Values are not equal\n%s: One value is nil", path.string())
+		eq.err = eq.equalityError(path, eqNil)
 		return false
 	}
 
-	if isNil(v1) == true {
-		return true
-	}
-
-	if eq.visit(v1, v2) {
+	if isNil(v1) || eq.visit(v1, v2) {
 		return true
 	}
 
 	switch v1.Kind() {
 	case reflect.Array:
 		if v1.Len() != v2.Len() {
-			eq.err = fmt.Errorf("Values are not equal\n%s: Array length is different", path.string())
+			eq.err = eq.equalityError(path, eqDiffLenArray, v1.Len(), v2.Len())
 			return false
 		}
 		for i := 0; i < v1.Len(); i++ {
@@ -167,7 +178,7 @@ func (eq *equalCheck) deepValueEqual(v1, v2 reflect.Value, path *path) bool {
 		return true
 	case reflect.Slice:
 		if v1.Len() != v2.Len() {
-			eq.err = fmt.Errorf("Values are not equal\n%s: Slice length is different", path.string())
+			eq.err = eq.equalityError(path, eqDiffLenSlice, v1.Len(), v2.Len())
 			return false
 		}
 		if v1.Pointer() == v2.Pointer() {
@@ -189,6 +200,15 @@ func (eq *equalCheck) deepValueEqual(v1, v2 reflect.Value, path *path) bool {
 			return true
 		}
 		return eq.deepValueEqual(v1.Elem(), v2.Elem(), path)
+	case reflect.Chan:
+		if !v1.CanAddr() || !v2.CanAddr() {
+			return false
+		}
+		if v1.UnsafeAddr() != v2.UnsafeAddr() {
+			eq.err = eq.equalityError(path, eqChannel, v1.UnsafeAddr(), v2.UnsafeAddr())
+			return false
+		}
+		return true
 	case reflect.Struct:
 		for i, n := 0, v1.NumField(); i < n; i++ {
 			if v := v1.Type().Field(i).Tag.Get("is"); v == "-" {
@@ -224,6 +244,31 @@ func (eq *equalCheck) deepValueEqual(v1, v2 reflect.Value, path *path) bool {
 	}
 }
 
+func (eq *equalCheck) equalityError(path *path, err int, v ...interface{}) error {
+	var s string
+	switch err {
+	case eqDiffTypes:
+		s = "Different types '%s' and '%s'"
+	case eqValZero:
+		s = "One value is invalid (untyped nil)"
+	case eqIncomparable:
+		s = "Incomparable kind: %s"
+	case eqNotEqual:
+		s = "'%v' is not equal to '%v'"
+	case eqDiffLenArray:
+		s = "Array length is different (%d,%d)"
+	case eqDiffLenSlice:
+		s = "Slice length is different (%d,%d)"
+	case eqChannel:
+		s = "Channels reffer to different memory locations. (%v, %v)"
+	case eqNil:
+		s = "One value is nil"
+	default:
+		panic("unknown error")
+	}
+	return fmt.Errorf("Values are not equal\n%s%s", path.string(), fmt.Sprintf(s, v...))
+}
+
 func deepEqual(x, y interface{}) (isEq bool, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -235,19 +280,19 @@ func deepEqual(x, y interface{}) (isEq bool, err error) {
 	v1 := reflect.ValueOf(x)
 	v2 := reflect.ValueOf(y)
 
+	eq := equalCheck{make(map[visit]bool), nil}
+
 	if !v1.IsValid() || !v2.IsValid() {
 		if v1.IsValid() != v2.IsValid() {
-			err = fmt.Errorf("Values are not equal\nOne value is zero (untyped nil)")
+			err = eq.equalityError(&path{}, eqValZero)
 			return false, err
 		}
 		return true, nil
 	}
 	if v1.Type() != v2.Type() {
-		err = fmt.Errorf("Values are not equal\nDifferent types '%s' and '%s'", v1.Type(), v2.Type())
+		err = eq.equalityError(&path{}, eqDiffTypes, v1.Type(), v2.Type())
 		return false, err
 	}
-
-	eq := equalCheck{make(map[visit]bool), nil}
 
 	isEq = eq.deepValueEqual(v1, v2, &path{depth: 0, path: name(v1)})
 	err = eq.err
