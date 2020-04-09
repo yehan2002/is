@@ -11,7 +11,7 @@ import (
 //Suite runs a test suite.
 //If the suite contains a method named `Setup` it is called before any tests are run.
 //Tests must start with `Test` and take `is.IS` as the first arg.
-//Finally after all the tests are called `Teardown` is called
+//Finally after all the tests are run the `Teardown` method is called.
 func Suite(t *testing.T, v interface{}) {
 	if v == nil {
 		panic("The provided suite is nil")
@@ -81,10 +81,10 @@ func (t *testSuite) callTest(method reflect.Method, value reflect.Value) {
 			fmt.Println(buf)
 		}
 
-		printf(messages.passTest, true, time.Now().Sub(now).Seconds())
+		printf(messages.passTest, true, method.Name, time.Now().Sub(now).Seconds())
 	} else {
 		buf := stdout()
-		printf(messages.failTest, true, time.Now().Sub(now).Seconds())
+		printf(messages.failTest, true, method.Name, time.Now().Sub(now).Seconds())
 		fmt.Println(buf)
 		printf(messages.failSuite, true, t.name)
 		t.t.FailNow()
