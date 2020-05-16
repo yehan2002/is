@@ -63,11 +63,11 @@ func (p *path) string() string {
 		if !first && strings.Index(s, "[") != 0 {
 			sb.WriteRune('.')
 		}
-		if first {
-			sb.WriteString(": ")
-			first = false
-		}
 		sb.WriteString(s)
+		first = false
+	}
+	if sb.Len() != 0 {
+		sb.WriteString(": ")
 	}
 	return sb.String()
 }
