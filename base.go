@@ -14,7 +14,7 @@ type baseTest struct {
 //Equal tests if the given values are equal.
 //Struct fields with the tag `is:"-"` are ignored
 func (i *baseTest) Equal(v1, v2 interface{}) IS {
-	if eq, err := deepEqual(v1, v2); !eq {
+	if eq, err := isEqual(v1, v2); !eq {
 		i.fail(i.t, nil, fmt.Sprint(err), true)
 	}
 	return i
@@ -22,7 +22,7 @@ func (i *baseTest) Equal(v1, v2 interface{}) IS {
 
 //EqualM like `Equal` but with a message
 func (i *baseTest) EqualM(v1, v2 interface{}, msg string) IS {
-	if eq, err := deepEqual(v1, v2); !eq {
+	if eq, err := isEqual(v1, v2); !eq {
 		i.fail(i.t, msg, fmt.Sprint(err), false)
 	}
 	return i
