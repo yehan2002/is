@@ -17,6 +17,8 @@ const (
 	eqIncomparable
 )
 
+const largeList = 20
+
 type visit struct {
 	a1  uintptr
 	a2  uintptr
@@ -126,8 +128,14 @@ func compare(name string, v1, v2 reflect.Value, visited map[visit]bool) (ok bool
 		if v1.CanInterface() && v1.Type().Comparable() && v1.Interface() == v2.Interface() {
 			return true // array is equal
 		}
-		for i := 0; i < v1.Len(); i++ {
-			compare(fmt.Sprintf("[%d]", i), v1.Index(i), v2.Index(i), visited)
+		if v1.Len() > largeList {
+			for i := 0; i < v1.Len(); i++ {
+				compare("", v1.Index(i), v2.Index(i), visited)
+			}
+		} else {
+			for i := 0; i < v1.Len(); i++ {
+				compare(fmt.Sprintf("[%d]", i), v1.Index(i), v2.Index(i), visited)
+			}
 		}
 		return true
 	case reflect.Slice:
@@ -152,8 +160,14 @@ func compare(name string, v1, v2 reflect.Value, visited map[visit]bool) (ok bool
 		if v1.CanInterface() && v1.Type().Comparable() && v1.Interface() == v2.Interface() {
 			return true // array is equal
 		}
-		for i := 0; i < v1.Len(); i++ {
-			compare(fmt.Sprintf("[%d]", i), v1.Index(i), v2.Index(i), visited)
+		if v1.Len() > largeList {
+			for i := 0; i < v1.Len(); i++ {
+				compare("", v1.Index(i), v2.Index(i), visited)
+			}
+		} else {
+			for i := 0; i < v1.Len(); i++ {
+				compare(fmt.Sprintf("[%d]", i), v1.Index(i), v2.Index(i), visited)
+			}
 		}
 		return true
 	case reflect.Interface:
