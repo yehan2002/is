@@ -231,7 +231,10 @@ func isEqual(v1, v2 interface{}) (isEq bool, err error) {
 		}
 		isEq = true
 	}()
-	compare("", reflect.ValueOf(v1), reflect.ValueOf(v2), make(map[visit]bool))
+	//This is faster when the values are equal.
+	if !reflect.DeepEqual(reflect.ValueOf(v1), reflect.ValueOf(v2)) {
+		compare("", reflect.ValueOf(v1), reflect.ValueOf(v2), make(map[visit]bool))
+	}
 	return
 }
 
