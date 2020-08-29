@@ -6,17 +6,16 @@ import (
 	"testing"
 )
 
-type failable func(t *testing.T, msg interface{}, test interface{}, comment bool)
+type failable func(t *testing.T, test interface{}, comment bool, msg []interface{})
 
-func (t *testSuite) fail(_ *testing.T, msg interface{}, test interface{}, comment bool) {
+func (t *testSuite) fail(_ *testing.T, test interface{}, comment bool, msg []interface{}) {
 	t.passed = false
 	if test != nil {
 		printf(messages.err2, true, test)
 	}
-	if msg != nil {
-		printf(messages.err1, true, msg)
-	}
-	if comment {
+	if msg != nil && len(msg) > 0 {
+		printf(messages.err1, true, fmt.Sprint(msg...))
+	} else if comment {
 		if c, ok := getComment(); ok {
 			printf(messages.err1, true, c)
 		}
@@ -27,15 +26,14 @@ func (t *testSuite) fail(_ *testing.T, msg interface{}, test interface{}, commen
 	runtime.Goexit()
 }
 
-func basicFailable(t *testing.T, msg interface{}, test interface{}, comment bool) {
+func basicFailable(t *testing.T, test interface{}, comment bool, msg []interface{}) {
 	if test != nil {
 		printf(messages.err2, true, test)
 	}
 
-	if msg != nil {
-		printf(messages.err1, true, msg)
-	}
-	if comment {
+	if msg != nil && len(msg) > 0 {
+		printf(messages.err1, true, fmt.Sprint(msg...))
+	} else if comment {
 		if c, ok := getComment(); ok {
 			printf(messages.err1, true, c)
 		}

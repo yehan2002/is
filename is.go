@@ -20,39 +20,41 @@ func New(t *testing.T) IS {
 type IS interface {
 	//Equal tests if the given values are equal.
 	//Struct fields with the tag `is:"-"` are ignored
-	Equal(v1, v2 interface{}) IS
-	//EqualM like `Equal` but with a message
-	EqualM(v1, v2 interface{}, msg string) IS
+	Equal(v1, v2 interface{}, msg ...interface{}) IS
 	//NotEqual tests if the given values are not equal
-	NotEqual(v1, v2 interface{}) IS
-	//NotEqualM like `NotEqual` but with a message
-	NotEqualM(v1, v2 interface{}, msg string) IS
+	NotEqual(v1, v2 interface{}, msg ...interface{}) IS
 	//NotNil tests if the given value is not nil
-	NotNil(v1 interface{}) IS
-	//NotNil tests if the given value is not nil
-	NotNilM(v1 interface{}, msg string) IS
+	NotNil(v1 interface{}, msg ...interface{}) IS
 	//Nil tests if the given value is nil
-	Nil(v1 interface{}) IS
-	//Nil like `Nil` but with a message
-	NilM(v1 interface{}, msg string) IS
+	Nil(v1 interface{}, msg ...interface{}) IS
+	//Err tests for errors
+	Err(v1 interface{}, msg ...interface{}) IS
+	//True tests if the given expression is true
+	True(v bool, msg ...interface{}) IS
+	//False tests if the given expression is false
+	False(v bool, msg ...interface{}) IS
+	//Fail fail the test immediately
+	Fail(msg ...interface{})
 
 	//MustPanic tests if the code panics
-	MustPanic()
+	MustPanic(msg ...interface{})
 	//MustCallPanic tests if calling p will panic
-	MustPanicCall(panicable)
+	MustPanicCall(p panicable, msg ...interface{})
 	//MustPanicCallReflect tests if the calling the function will panic
 	MustPanicCallReflect(funct interface{}, args ...interface{})
 
-	//Err tests for errors
-	Err(v1 interface{}) IS
-	//True tests if the given expression is true
-	True(v bool) IS
-	//False tests if the given expression is false
-	False(v bool) IS
-	//True like `True` but with a message
-	TrueM(v bool, msg string) IS
-	//FalseM like `False` but with a message
-	FalseM(v bool, msg string) IS
-	//Fail fail the test immediately
-	Fail(msg interface{})
+	//EqualM same as Equal.
+	EqualM(v1, v2 interface{}, msg ...interface{}) IS
+	//NotEqual same as NotEqual.
+	NotEqualM(v1, v2 interface{}, msg ...interface{}) IS
+	//NotNilM same as NotNil.
+	NotNilM(v1 interface{}, msg ...interface{}) IS
+	//NilM same as Nil.
+	NilM(v1 interface{}, msg ...interface{}) IS
+	//ErrM same as Err.
+	ErrM(v1 interface{}, msg ...interface{}) IS
+	//TrueM same as True.
+	TrueM(v bool, msg ...interface{}) IS
+	//FalseM same as False.
+	FalseM(v bool, msg ...interface{}) IS
 }

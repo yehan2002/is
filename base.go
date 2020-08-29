@@ -13,119 +13,71 @@ type baseTest struct {
 
 //Equal tests if the given values are equal.
 //Struct fields with the tag `is:"-"` are ignored
-func (i *baseTest) Equal(v1, v2 interface{}) IS {
+func (i *baseTest) Equal(v1, v2 interface{}, msg ...interface{}) IS {
 	if eq, err := isEqual(v1, v2); !eq {
-		i.fail(i.t, nil, fmt.Sprint(err), true)
-	}
-	return i
-}
-
-//EqualM like `Equal` but with a message
-func (i *baseTest) EqualM(v1, v2 interface{}, msg string) IS {
-	if eq, err := isEqual(v1, v2); !eq {
-		i.fail(i.t, msg, fmt.Sprint(err), false)
+		i.fail(i.t, fmt.Sprint(err), true, msg)
 	}
 	return i
 }
 
 //NotEqual tests if the given values are not equal
-func (i *baseTest) NotEqual(v1, v2 interface{}) IS {
+func (i *baseTest) NotEqual(v1, v2 interface{}, msg ...interface{}) IS {
 	if reflect.DeepEqual(v1, v2) {
-		i.fail(i.t, nil, fmt.Sprintf("%#v is equal to %#v", v1, v2), true)
-	}
-	return i
-}
-
-//NotEqualM like `NotEqual` but with a message
-func (i *baseTest) NotEqualM(v1, v2 interface{}, msg string) IS {
-	if reflect.DeepEqual(v1, v2) {
-		i.fail(i.t, msg, fmt.Sprintf("%#v is equal to %#v", v1, v2), false)
+		i.fail(i.t, fmt.Sprintf("%#v is equal to %#v", v1, v2), true, msg)
 	}
 	return i
 }
 
 //NotNil tests if the given value is not nil
-func (i *baseTest) NotNil(v1 interface{}) IS {
+func (i *baseTest) NotNil(v1 interface{}, msg ...interface{}) IS {
 	if v1 == nil {
-		i.fail(i.t, nil, "unexpected nil value", true)
-	}
-	return i
-}
-
-//NotNil tests if the given value is not nil
-func (i *baseTest) NotNilM(v1 interface{}, msg string) IS {
-	if v1 == nil {
-		i.fail(i.t, msg, "unexpected nil value", false)
+		i.fail(i.t, "unexpected nil value", true, msg)
 	}
 	return i
 }
 
 //Nil tests if the given value is nil
-func (i *baseTest) Nil(v1 interface{}) IS {
+func (i *baseTest) Nil(v1 interface{}, msg ...interface{}) IS {
 	if v1 != nil {
-		i.fail(i.t, nil, "value is not nil", true)
-	}
-	return i
-}
-
-//Nil like `Nil` but with a message
-func (i *baseTest) NilM(v1 interface{}, msg string) IS {
-	if v1 != nil {
-		i.fail(i.t, msg, "value is not nil", false)
+		i.fail(i.t, "value is not nil", true, msg)
 	}
 	return i
 }
 
 //Err tests for errors
-func (i *baseTest) Err(v1 interface{}) IS {
+func (i *baseTest) Err(v1 interface{}, msg ...interface{}) IS {
 	if v1 != nil {
-		i.fail(i.t, v1, "unexpected error", false)
+		i.fail(i.t, "unexpected error", false, append([]interface{}{v1}, msg...))
 	}
 	return i
 }
 
 //True tests if the given expression is true
-func (i *baseTest) True(v bool) IS {
+func (i *baseTest) True(v bool, msg ...interface{}) IS {
 	if !v {
-		i.fail(i.t, nil, "expected value to be true", true)
-	}
-	return i
-}
-
-//TrueM like `True` but with a message
-func (i *baseTest) TrueM(v bool, msg string) IS {
-	if !v {
-		i.fail(i.t, msg, "expected value to be true", false)
+		i.fail(i.t, "expected value to be true", true, msg)
 	}
 	return i
 }
 
 //False tests if the given expression is false
-func (i *baseTest) False(v bool) IS {
+func (i *baseTest) False(v bool, msg ...interface{}) IS {
 	if v {
-		i.fail(i.t, nil, "expected value to be false", true)
-	}
-	return i
-}
-
-//FalseM like `False` but with a message
-func (i *baseTest) FalseM(v bool, msg string) IS {
-	if v {
-		i.fail(i.t, msg, "expected value to be false", false)
+		i.fail(i.t, "expected value to be false", true, msg)
 	}
 	return i
 }
 
 //MustPanic tests if the code panics
-func (i *baseTest) MustPanic() {
+func (i *baseTest) MustPanic(msg ...interface{}) {
 	if r := recover(); r == nil {
-		i.fail(i.t, nil, "expected a panic", true)
+		i.fail(i.t, "expected a panic", true, msg)
 	}
 }
 
 //MustCallPanic tests if calling p will panic
-func (i *baseTest) MustPanicCall(p panicable) {
-	defer i.MustPanic()
+func (i *baseTest) MustPanicCall(p panicable, msg ...interface{}) {
+	defer i.MustPanic(msg)
 	p()
 }
 
@@ -159,6 +111,31 @@ func (i *baseTest) MustPanicCallReflect(funct interface{}, args ...interface{}) 
 }
 
 //Fail fail the test immediately
-func (i *baseTest) Fail(msg interface{}) {
-	i.fail(i.t, msg, nil, false)
+func (i *baseTest) Fail(msg ...interface{}) {
+	i.fail(i.t, msg, false, msg)
 }
+
+//EqualM same as Equal.
+func (i *baseTest) EqualM(v1, v2 interface{}, msg ...interface{}) IS {
+	return i.Equal(v1, v2, msg...)
+}
+
+//NotEqual same as NotEqual.
+func (i *baseTest) NotEqualM(v1, v2 interface{}, msg ...interface{}) IS {
+	return i.NotEqual(v1, v2, msg...)
+}
+
+//NotNil same as NotNil.
+func (i *baseTest) NotNilM(v1 interface{}, msg ...interface{}) IS { return i.NotNil(v1, msg...) }
+
+//Nil same as Nil.
+func (i *baseTest) NilM(v1 interface{}, msg ...interface{}) IS { return i.Nil(v1, msg...) }
+
+//Err same as Err.
+func (i *baseTest) ErrM(v1 interface{}, msg ...interface{}) IS { return i.Err(v1, msg...) }
+
+//True same as True.
+func (i *baseTest) TrueM(v bool, msg ...interface{}) IS { return i.True(v, msg...) }
+
+//False same as False.
+func (i *baseTest) FalseM(v bool, msg ...interface{}) IS { return i.False(v, msg...) }
