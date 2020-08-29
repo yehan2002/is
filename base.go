@@ -30,7 +30,7 @@ func (i *baseTest) NotEqual(v1, v2 interface{}, msg ...interface{}) IS {
 
 //NotNil tests if the given value is not nil
 func (i *baseTest) NotNil(v1 interface{}, msg ...interface{}) IS {
-	if v1 == nil {
+	if v1 == nil && reflect.ValueOf(v1).IsNil() {
 		i.fail(i.t, "unexpected nil value", true, msg)
 	}
 	return i
@@ -38,7 +38,7 @@ func (i *baseTest) NotNil(v1 interface{}, msg ...interface{}) IS {
 
 //Nil tests if the given value is nil
 func (i *baseTest) Nil(v1 interface{}, msg ...interface{}) IS {
-	if v1 != nil {
+	if v1 != nil && !reflect.ValueOf(v1).IsNil() {
 		i.fail(i.t, "value is not nil", true, msg)
 	}
 	return i
