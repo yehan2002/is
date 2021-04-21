@@ -49,7 +49,7 @@ func TestLoader(t *testing.T){
 
 ```
 
-## API
+## Functions
 
 * IS.Equal - Fails if the provided values are not are deeply equal
 * IS.NotEqual - Fails if the provided values are  deeply equal
