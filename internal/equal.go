@@ -1,4 +1,4 @@
-package is
+package internal
 
 import (
 	"fmt"
@@ -219,7 +219,11 @@ func compare(name string, v1, v2 reflect.Value, visited map[visit]bool) (ok bool
 	}
 }
 
-func isEqual(v1, v2 interface{}) (isEq bool, err error) {
+//IsEqual copares the given values and returns if they are equal.
+//This function is used instead of reflect.DeepEqual since it allows
+//for struct fields to be skipped and also provides a detailed error
+//if the given values are not equal
+func IsEqual(v1, v2 interface{}) (isEq bool, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if eq, ok := r.(*eqError); ok {

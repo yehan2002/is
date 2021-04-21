@@ -1,4 +1,4 @@
-package is
+package internal
 
 import (
 	"bufio"
@@ -16,10 +16,10 @@ var stdoutMux = &sync.Mutex{}
 //maxStackLength the maximum amount of stack frames to read
 const maxStackLength = 50
 
-// getComment gets the Go comment from the specified line
-// in the specified file.
-// https://github.com/matryer/is/blob/master/is.go
-func getComment() (comment string, ok bool) {
+//GetComment gets the Go comment from the specified line
+//in the specified file.
+//https://github.com/matryer/is/blob/master/is.go
+func GetComment() (comment string, ok bool) {
 	var path string
 	var line int
 	for i := 0; ; i++ {
@@ -57,7 +57,8 @@ func getComment() (comment string, ok bool) {
 	return "", false
 }
 
-func getStack(skip int) string {
+//GetStack get the stack trace after skipping `skip` frames
+func GetStack(skip int) string {
 	stackBuf := make([]uintptr, maxStackLength)
 	length := runtime.Callers(skip+1, stackBuf[:])
 	stack := skipInternal(stackBuf[:length])
@@ -104,7 +105,9 @@ func isInternal(v string) bool {
 	return c(v, "github.com/yehan2002/is/")
 }
 
-func captureStdout() func() string {
+//CaptureStdout capture the stdout output.
+//This returns a function that when called stops capturing stdout and returns the captured output.
+func CaptureStdout() func() string {
 	var r, w *os.File
 	var err error
 	if r, w, err = os.Pipe(); err == nil {

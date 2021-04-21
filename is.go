@@ -1,22 +1,14 @@
+//Package is provides helper functions for testing
 package is
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/yehan2002/is/internal"
 )
 
-// IS is a package for writing tests
-
-var isType = reflect.TypeOf((*IS)(nil)).Elem()
-
-type panicable func()
-
-//New creates a new test helper
-func New(t *testing.T) IS {
-	return &baseTest{t: t, fail: basicFailable}
-}
-
-//IS a test
+//IS a helper for writing tests.
 type IS interface {
 	//Equal tests if the given values are equal.
 	//Struct fields with the tag `is:"-"` are ignored
@@ -58,3 +50,17 @@ type IS interface {
 	//FalseM same as False.
 	FalseM(v bool, msg ...interface{}) IS
 }
+
+//New creates a new test helper
+func New(t *testing.T) IS { return &baseTest{t: t, fail: basicFailable} }
+
+//NoColor disables color
+func NoColor() {
+	internal.NoColorFlag = true
+}
+
+type panicable func()
+type failable func(t *testing.T, test interface{}, comment bool, msg []interface{})
+
+var messages = internal.Messages
+var isType = reflect.TypeOf((*IS)(nil)).Elem()

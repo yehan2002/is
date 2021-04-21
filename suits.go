@@ -3,9 +3,12 @@ package is
 import (
 	"fmt"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/yehan2002/is/internal"
 )
 
 //Suite runs a test suite.
@@ -26,7 +29,7 @@ func Suite(t *testing.T, v interface{}) {
 	} else {
 		s.name = reflect.TypeOf(v).Name()
 	}
-	printf(messages.start, true, s.name)
+	messages.Start.Print(true, s.name)
 
 	is.fail = s.fail
 	var suite, suitePtr reflect.Value
@@ -43,7 +46,7 @@ func Suite(t *testing.T, v interface{}) {
 	s.callTests(suitePtr)
 	s.teardownTests(suitePtr)
 
-	printf(messages.passSuite, true, s.name)
+	messages.PassSuite.Print(true, s.name)
 }
 
 type testSuite struct {
@@ -72,21 +75,21 @@ func (t *testSuite) callTests(value reflect.Value) {
 func (t *testSuite) callTest(method reflect.Method, value reflect.Value) {
 	now := time.Now()
 	if testing.Verbose() {
-		printf(messages.run, true, method.Name)
+		messages.Run.Print(true, method.Name)
 	}
-	stdout := captureStdout()
+	stdout := internal.CaptureStdout()
 	if t.callTestFunc(method, value) && t.passed {
 		buf := stdout()
 		if testing.Verbose() { // ignore stdout since the test passed
 			fmt.Println(buf)
 		}
 
-		printf(messages.passTest, true, method.Name, time.Now().Sub(now).Seconds())
+		messages.PassTest.Print(true, method.Name, time.Now().Sub(now).Seconds())
 	} else {
 		buf := stdout()
-		printf(messages.failTest, true, method.Name, time.Now().Sub(now).Seconds())
+		messages.FailTest.Print(true, method.Name, time.Now().Sub(now).Seconds())
 		fmt.Println(buf)
-		printf(messages.failSuite, true, t.name)
+		messages.FailSuite.Print(true, t.name)
 		t.t.FailNow()
 	}
 
@@ -123,4 +126,22 @@ func (t *testSuite) teardownTests(value reflect.Value) {
 		}
 		method.Func.Call([]reflect.Value{value})
 	}
+}
+
+func (t *testSuite) fail(_ *testing.T, test interface{}, comment bool, msg []interface{}) {
+	t.passed = false
+	if test != nil {
+		messages.Err2.Print(true, test)
+	}
+	if msg != nil && len(msg) > 0 {
+		messages.Err1.Print(true, fmt.Sprint(msg...))
+	} else if comment {
+		if c, ok := internal.GetComment(); ok {
+			messages.Err1.Print(true, c)
+		}
+	}
+
+	fmt.Println(internal.GetStack(3))
+	t.testChan <- false
+	runtime.Goexit()
 }

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/yehan2002/is/internal"
 )
 
 type baseTest struct {
@@ -14,7 +16,7 @@ type baseTest struct {
 //Equal tests if the given values are equal.
 //Struct fields with the tag `is:"-"` are ignored
 func (i *baseTest) Equal(v1, v2 interface{}, msg ...interface{}) IS {
-	if eq, err := isEqual(v1, v2); !eq {
+	if eq, err := internal.IsEqual(v1, v2); !eq {
 		i.fail(i.t, fmt.Sprint(err), true, msg)
 	}
 	return i
@@ -139,3 +141,20 @@ func (i *baseTest) TrueM(v bool, msg ...interface{}) IS { return i.True(v, msg..
 
 //False same as False.
 func (i *baseTest) FalseM(v bool, msg ...interface{}) IS { return i.False(v, msg...) }
+
+func basicFailable(t *testing.T, test interface{}, comment bool, msg []interface{}) {
+	if test != nil {
+		messages.Err2.Print(true, test)
+	}
+
+	if msg != nil && len(msg) > 0 {
+		messages.Err1.Print(true, fmt.Sprint(msg...))
+	} else if comment {
+		if c, ok := internal.GetComment(); ok {
+			messages.Err1.Print(true, c)
+		}
+	}
+
+	fmt.Println(internal.GetStack(3))
+	t.FailNow()
+}
