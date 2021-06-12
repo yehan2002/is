@@ -114,7 +114,7 @@ func (i *baseTest) MustPanicCallReflect(funct interface{}, args ...interface{}) 
 
 //Fail fail the test immediately
 func (i *baseTest) Fail(msg ...interface{}) {
-	i.fail(i.t, msg, false, msg)
+	i.fail(i.t, nil, false, msg)
 }
 
 //EqualM same as Equal.
@@ -143,18 +143,6 @@ func (i *baseTest) TrueM(v bool, msg ...interface{}) IS { return i.True(v, msg..
 func (i *baseTest) FalseM(v bool, msg ...interface{}) IS { return i.False(v, msg...) }
 
 func basicFailable(t *testing.T, test interface{}, comment bool, msg []interface{}) {
-	if test != nil {
-		messages.Err2.Print(true, test)
-	}
-
-	if msg != nil && len(msg) > 0 {
-		messages.Err1.Print(true, fmt.Sprint(msg...))
-	} else if comment {
-		if c, ok := internal.GetComment(); ok {
-			messages.Err1.Print(true, c)
-		}
-	}
-
-	fmt.Println(internal.GetStack(3))
+	errMessage(test, comment, msg)
 	t.FailNow()
 }

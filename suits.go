@@ -130,9 +130,16 @@ func (t *testSuite) teardownTests(value reflect.Value) {
 
 func (t *testSuite) fail(_ *testing.T, test interface{}, comment bool, msg []interface{}) {
 	t.passed = false
+	errMessage(test, comment, msg)
+	t.testChan <- false
+	runtime.Goexit()
+}
+
+func errMessage(test interface{}, comment bool, msg []interface{}) {
 	if test != nil {
 		messages.Err2.Print(true, test)
 	}
+
 	if msg != nil && len(msg) > 0 {
 		messages.Err1.Print(true, fmt.Sprint(msg...))
 	} else if comment {
@@ -140,8 +147,5 @@ func (t *testSuite) fail(_ *testing.T, test interface{}, comment bool, msg []int
 			messages.Err1.Print(true, c)
 		}
 	}
-
 	fmt.Println(internal.GetStack(3))
-	t.testChan <- false
-	runtime.Goexit()
 }
