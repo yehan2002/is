@@ -1,66 +1,102 @@
-//Package is provides helper functions for testing
 package is
 
 import (
-	"reflect"
+	"fmt"
+	"strings"
 	"testing"
 
-	"github.com/yehan2002/is/internal"
+	"github.com/go-test/deep"
 )
 
-//IS a helper for writing tests.
-type IS interface {
-	//Equal tests if the given values are equal.
-	//Struct fields with the tag `is:"-"` are ignored
-	Equal(v1, v2 interface{}, msg ...interface{}) IS
-	//NotEqual tests if the given values are not equal
-	NotEqual(v1, v2 interface{}, msg ...interface{}) IS
-	//NotNil tests if the given value is not nil
-	NotNil(v1 interface{}, msg ...interface{}) IS
-	//Nil tests if the given value is nil
-	Nil(v1 interface{}, msg ...interface{}) IS
-	//Err tests for errors
-	Err(v1 interface{}, msg ...interface{}) IS
-	//True tests if the given expression is true
-	True(v bool, msg ...interface{}) IS
-	//False tests if the given expression is false
-	False(v bool, msg ...interface{}) IS
-	//Fail fail the test immediately
-	Fail(msg ...interface{})
+// Is is provides helpers for writing tests.
+type Is func(cond bool, msg string, i ...interface{})
 
-	//MustPanic tests if the code panics
-	MustPanic(msg ...interface{})
-	//MustCallPanic tests if calling p will panic
-	MustPanicCall(p panicable, msg ...interface{})
-	//MustPanicCallReflect tests if the calling the function will panic
-	MustPanicCallReflect(funct interface{}, args ...interface{})
-
-	//EqualM same as Equal.
-	EqualM(v1, v2 interface{}, msg ...interface{}) IS
-	//NotEqual same as NotEqual.
-	NotEqualM(v1, v2 interface{}, msg ...interface{}) IS
-	//NotNilM same as NotNil.
-	NotNilM(v1 interface{}, msg ...interface{}) IS
-	//NilM same as Nil.
-	NilM(v1 interface{}, msg ...interface{}) IS
-	//ErrM same as Err.
-	ErrM(v1 interface{}, msg ...interface{}) IS
-	//TrueM same as True.
-	TrueM(v bool, msg ...interface{}) IS
-	//FalseM same as False.
-	FalseM(v bool, msg ...interface{}) IS
+// Equal checks if the given values are equal
+func (is Is) Equal(v1, v2 interface{}, msg string, i ...interface{}) {
+	if dif := deep.Equal(v1, v2); len(dif) != 0 {
+		is.T().Helper()
+		is(false, fmt.Sprintf("%s\nValues are not equal:\n\t%s", fmt.Sprintf(msg, i...), strings.Join(dif, "\n\t")))
+	}
 }
 
-//New creates a new test helper
-func New(t *testing.T) IS { return &baseTest{t: t, fail: basicFailable} }
-
-//NoColor disables color
-func NoColor() {
-	internal.NoColorFlag = true
+// Fail immediately fails the test.
+func (is Is) Fail(msg string, i ...interface{}) {
+	is.T().Helper()
+	is(false, msg, i...)
 }
 
-type panicable func()
-type failable func(t *testing.T, test interface{}, comment bool, msg []interface{})
+// Panic checks if calling the given function causes a panic.
+// If the given function does not panic the test fails.
+func (is Is) Panic(panicable func(), msg string, i ...interface{}) {
+	if !callPanic(panicable) {
+		is.T().Helper()
+		is(false, fmt.Sprintf("%s\nFunction did not panic", fmt.Sprintf(msg, i...)))
+	}
+}
 
-var messages = internal.Messages
-var isType = reflect.TypeOf((*IS)(nil)).Elem()
+// Log logs the given message.
+// This is the equivalent of calling is.T().Log(msg).
+// This function can be called from multiple goroutines concurrently.
+func (is Is) Log(msg string, i ...interface{}) {
+	t := is.T()
+	t.Helper()
+	t.Logf(msg, i...)
+}
+
+// Run runs the given test.
+func (is Is) Run(name string, f func(Is)) {
+	is.T().Run(name, func(t *testing.T) { f(New(t)) })
+}
+
+// RunP runs the given test in parallel with the current test.
+func (is Is) RunP(name string, f func(Is)) {
+	is.T().Run(name, func(t *testing.T) { t.Parallel(); f(New(t)) })
+}
+
+// T gets the underlying *testing.T for this test.
+func (is Is) T() (t *testing.T) {
+	// This is a ugly hack to get the testing.T value from `is`.
+	// Calling `is(false, "", internalIsCall, **testing.T)` sets the the value to the given ptr.
+	// This is done by `setT`
+	is(false, "", internalIsCall, &t)
+	return
+}
+
+var internalIsCall = new(uint16)
+
+func setT(t *testing.T, msg string, i []interface{}) (ok bool) {
+	if msg == "" && len(i) == 2 {
+		if i[0] == internalIsCall {
+			var dst **testing.T
+			if dst, ok = i[1].(**testing.T); ok {
+				*dst = t
+			}
+			return ok
+		}
+	}
+	return
+}
+
+func callPanic(f func()) (paniced bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			paniced = true
+		}
+	}()
+	f()
+	return
+}
+
+// New creates a new test
+func New(t *testing.T) Is {
+	return func(cond bool, msg string, i ...interface{}) {
+		t.Helper()
+		if !cond {
+			if ok := setT(t, msg, i); ok { // see comment in is.T()
+				return
+			}
+			t.Errorf(msg, i...)
+			t.FailNow()
+		}
+	}
+}
