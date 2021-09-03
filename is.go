@@ -57,7 +57,7 @@ func (is Is) RunP(name string, f func(Is)) {
 func (is Is) T() (t *testing.T) {
 	// This is a ugly hack to get the testing.T value from `is`.
 	// Calling `is(false, "", internalIsCall, **testing.T)` sets the the value to the given ptr.
-	// This is done by `setT`
+	// This is done by calling `setT`.
 	is(false, "", internalIsCall, &t)
 	return
 }

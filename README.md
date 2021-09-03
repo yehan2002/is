@@ -8,15 +8,18 @@ A lightweight testing framework for golang.
 
 ```golang
 func TestLoader(t *testing.T){
-    l := loader{url: "http://example.com"}
-
     is := is.New(t)
-    is.Equal(l.url,"http://example.com") // test default url
-
-    r,err := l.Get()
-    is.Err(err)
-
-    is.Equal(r, testData) // the page content must match
+    
+    l := loader{url: "http://example.com"}
+    
+    r, err := l.Get()
+    is(l.url == "http://example.com", "calling Get() should not modify url")
+    if err == nil{
+        is(r != nil, "response should not be nil if err != nil")
+        is.Equal(r, testData, "the page content must match")
+    } else {
+         is.Log("Failed to get test data. Skipping test.")
+    }
 
 }
 }
@@ -32,7 +35,7 @@ type LoaderTest struct{
 }
 
 func (l *LoaderTest) Setup(){
-    l.loader = loader{}
+    l.loader = &loader{}
 }
 
 func (l *LoaderTest) TestUrl(is is.Is){
@@ -51,18 +54,6 @@ func TestLoader(t *testing.T){
 
 ## Functions
 
-* IS.Equal - Fails if the provided values are not are deeply equal
-* IS.NotEqual - Fails if the provided values are  deeply equal
-* IS.NotNil - Fails if the provided value is nil
-* IS.Nil - Fails if the provided value is not nil
-* IS.Err - Fails if the error is not nil
-* IS.True - Fails if the provided value is not `true`
-* IS.False - Fails if the provided value is not `false`
-* IS.MustPanic - Fails if `recover()` returns nil
-* IS.MustPanicCall - Calls the given function and fails if it does not panic
-* IS.MustPanicCallReflect - Calls the given function with the given args and fails if it does not panic
-* IS.Fail - Fails the test with the given message
-
-## Color
-
-`Is` defaults to not using color unless the `COLOR_TEST` is set to `true`
+* Is.Equal - Fails if the provided values are not are deeply equal
+* Is.Panic - Fails if `recover()` returns nil
+* Is.Fail - Fails the test with the given message
