@@ -43,7 +43,7 @@ func runSuite(t *testing.T, s interface{}, parallel bool) {
 	for i := 0; i < suite.NumMethod(); i++ {
 		methodType := suiteType.Method(i)
 		method := suite.Method(i)
-		if !methodType.IsExported() {
+		if !isExported(methodType) {
 			continue
 		}
 		if name := methodType.Name; strings.HasPrefix(name, "Test") {
