@@ -3,6 +3,7 @@ package is
 import (
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -65,8 +66,10 @@ func runSuite(t *testing.T, s interface{}, parallel bool) {
 	}
 
 	if len(tests) == 0 {
-		t.Fatalf("is.Suite: skipped suite '%s' with no tests", suiteType.Name())
+		t.Fatalf("is.Suite: skipped suite '%s' with no tests", suiteType.String())
 	}
+
+	testWG := sync.WaitGroup{}
 
 	setup()
 	for _, test := range tests {
@@ -74,11 +77,16 @@ func runSuite(t *testing.T, s interface{}, parallel bool) {
 			t.Helper()
 
 			if parallel {
+				testWG.Add(1)
+				defer testWG.Done()
 				t.Parallel()
 			}
 
 			test.fn(New(t))
 		})
 	}
+
+	testWG.Wait()
+
 	t.Cleanup(teardown)
 }
