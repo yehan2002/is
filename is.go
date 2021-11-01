@@ -2,6 +2,7 @@ package is
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -13,9 +14,11 @@ type Is func(cond bool, msg string, i ...interface{})
 
 // Equal checks if the given values are equal
 func (is Is) Equal(v1, v2 interface{}, msg string, i ...interface{}) {
-	if dif := deep.Equal(v1, v2); len(dif) != 0 {
-		is.T().Helper()
-		is(false, fmt.Sprintf("%s\nValues are not equal:\n\t%s", fmt.Sprintf(msg, i...), strings.Join(dif, "\n\t")))
+	if !reflect.DeepEqual(v1, v2) {
+		if dif := deep.Equal(v1, v2); len(dif) != 0 {
+			is.T().Helper()
+			is(false, fmt.Sprintf("%s\nValues are not equal:\n\t%s", fmt.Sprintf(msg, i...), strings.Join(dif, "\n\t")))
+		}
 	}
 }
 
