@@ -1,6 +1,7 @@
 package is
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -26,6 +27,14 @@ func (is Is) Equal(v1, v2 interface{}, msg string, i ...interface{}) {
 func (is Is) Fail(msg string, i ...interface{}) {
 	is.T().Helper()
 	is(false, msg, i...)
+}
+
+// Err checks if any error in err's chain matches target.
+func (is Is) Err(err, target error, msg string, i ...interface{}) {
+	if !errors.Is(err, target) {
+		is.T().Helper()
+		is(false, fmt.Sprintf("%s\nError `%s` is not `%s`", fmt.Sprintf(msg, i...), err, target))
+	}
 }
 
 // Panic checks if calling the given function causes a panic.
