@@ -69,7 +69,8 @@ func runSuite(t *testing.T, s interface{}, parallel bool) {
 	}
 
 	setup()
-	for _, test := range tests {
+	for i := range tests {
+		test := tests[i]
 		t.Run(test.name, func(t *testing.T) {
 			t.Helper()
 
