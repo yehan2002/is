@@ -112,3 +112,7 @@ func New(t *testing.T) Is {
 		}
 	}
 }
+
+func init() {
+	deep.CompareUnexportedFields = true
+}
