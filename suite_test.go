@@ -33,7 +33,7 @@ func (t *testSetupTeardownIncorrect) Setup() error { return nil }
 
 func TestSuiteNil(t *testing.T) {
 	result := internal.Run(func(t internal.T) { makeSuite(t, nil, false) })
-	if !result.Failed || !errors.Is(result.Error, errNilSuite) {
+	if !result.Failed || !errors.Is(result.TestError, errNilSuite) {
 		t.Fatalf("makeSuite allowed a nil test suite: %s", result.FailMessage)
 	}
 }
@@ -95,14 +95,14 @@ func TestSuiteSetupTeardown(t *testing.T) {
 	}
 
 	result = internal.Run(func(t internal.T) { suite = makeSuite(t, &testSetupTeardownIncorrect{}, false); suite.Run(t) })
-	if !result.Failed || !errors.Is(result.Error, errMethodSignature) {
+	if !result.Failed || !errors.Is(result.TestError, errMethodSignature) {
 		t.Fatalf("allowed test suite with invalid setup function: %s", result.FailMessage)
 	}
 }
 
 func TestSuiteReceiver(t *testing.T) {
 	result := internal.Run(func(t internal.T) { makeSuite(t, testTest{}, false) })
-	if !result.Failed || !errors.Is(result.Error, errReceiver) {
+	if !result.Failed || !errors.Is(result.TestError, errReceiver) {
 		t.Fatalf("allowed suite with pointer receivers to be created from struct value")
 	}
 }

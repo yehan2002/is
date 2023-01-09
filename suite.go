@@ -1,20 +1,12 @@
 package is
 
 import (
-	"errors"
 	"reflect"
 	"runtime/debug"
 	"strings"
 	"testing"
 
 	"github.com/yehan2002/is/v2/internal"
-)
-
-// internal errors used for tests
-var (
-	errNilSuite        = errors.New("test suite is nil")
-	errMethodSignature = errors.New("invalid method signature for Setup/Teardown")
-	errReceiver        = errors.New("got value not pointer to value")
 )
 
 // Suite runs the given test suite.
@@ -71,15 +63,7 @@ func (s *testSuite) Run(t internal.T) {
 
 	for i := range s.tests {
 		test := s.tests[i]
-		t.Run(test.Name, func(t *testing.T) {
-			t.Helper()
-
-			if s.parallel {
-				t.Parallel()
-			}
-
-			test.Func(New(t))
-		})
+		runT(t, test.Name, s.parallel, test.Func)
 	}
 }
 

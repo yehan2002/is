@@ -4,4 +4,4 @@ go 1.16
 
 retract v2.2.0 // this version deadlocks on parallel tests
 
-require github.com/go-test/deep v1.1.0
+require github.com/google/go-cmp v0.5.9

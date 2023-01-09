@@ -11,9 +11,12 @@ type T interface {
 	Helper()
 	Parallel()
 	Cleanup(f func())
-	Run(name string, f func(t *testing.T)) bool
 	Fatalf(format string, args ...interface{})
 	Logf(format string, args ...interface{})
+
+	Error(v ...interface{})
+	Errorf(format string, args ...interface{})
+	FailNow()
 }
 
 var _ T = (*testing.T)(nil)
@@ -24,8 +27,8 @@ type Test struct {
 	RunTests     []TestFn
 
 	Failed      bool
-	FailMessage string
-	Error       error
+	FailMessage []string
+	TestError   error
 }
 
 // Helper is a no-op function
@@ -41,16 +44,16 @@ func (t *Test) Logf(format string, args ...interface{}) {}
 func (t *Test) Cleanup(f func()) { t.CleanupFuncs = append(t.CleanupFuncs, f) }
 
 // Run adds a test to be run
-func (t *Test) Run(name string, f func(t *testing.T)) bool {
+func (t *Test) Run(name string, parallel bool, f func(t *Test)) bool {
 	t.RunTests = append(t.RunTests, TestFn{Name: name, F: f})
-
+	f(t)
 	return true
 }
 
 // TestFn a test function passed to [Test.Run]
 type TestFn struct {
 	Name string
-	F    func(t *testing.T)
+	F    func(t *Test)
 }
 
 var errFatal = errors.New("fatal")
@@ -58,7 +61,24 @@ var errFatal = errors.New("fatal")
 // Fatalf fails the test and panics
 func (t *Test) Fatalf(format string, args ...interface{}) {
 	t.Failed = true
-	t.FailMessage = fmt.Sprintf(format, args...)
+	t.FailMessage = append(t.FailMessage, fmt.Sprintf(format, args...))
+	panic(errFatal)
+}
+
+// Error appends an error
+func (t *Test) Error(v ...interface{}) {
+	t.Failed = true
+	t.FailMessage = append(t.FailMessage, fmt.Sprint(v...))
+}
+
+// Errorf appends an error
+func (t *Test) Errorf(format string, args ...interface{}) {
+	t.Failed = true
+	t.FailMessage = append(t.FailMessage, fmt.Sprintf(format, args...))
+}
+
+// FailNow panic with errFatal
+func (t *Test) FailNow() {
 	panic(errFatal)
 }
 
@@ -78,5 +98,5 @@ func Run(f func(T)) (t *Test) {
 
 // SetError sets the error that occurred
 func (t *Test) SetError(err error) {
-	t.Error = err
+	t.TestError = err
 }

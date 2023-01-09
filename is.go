@@ -4,45 +4,59 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 
-	"github.com/go-test/deep"
+	"github.com/yehan2002/is/v2/internal"
 )
 
 // Is is provides helpers for writing tests.
 type Is func(cond bool, msg string, i ...interface{})
 
-// Equal checks if the given values are equal
-func (is Is) Equal(v1, v2 interface{}, msg string, i ...interface{}) {
-	if !reflect.DeepEqual(v1, v2) {
-		if dif := deep.Equal(v1, v2); len(dif) != 0 {
-			is.T().Helper()
-			is(false, fmt.Sprintf("%s\nValues are not equal:\n\t%s", fmt.Sprintf(msg, i...), strings.Join(dif, "\n\t")))
+// Equal checks if the given values are equal.
+func (is Is) Equal(value, expected interface{}, format string, i ...interface{}) {
+	if !reflect.DeepEqual(value, expected) {
+		if diff := cmpValue(value, expected); len(diff) != 0 {
+			is.t().Helper()
+			is.fail(errNotEqual, "Values are not equal:\n"+diff, format, i...)
 		}
 	}
 }
 
 // Fail immediately fails the test.
-func (is Is) Fail(msg string, i ...interface{}) {
-	is.T().Helper()
-	is(false, msg, i...)
+// Calling this function is the equivalent of calling is.T().Fatalf.
+func (is Is) Fail(format string, args ...interface{}) {
+	is.t().Helper()
+	is.fail(errCalledFail, "", format, args...)
 }
 
 // Err checks if any error in err's chain matches target.
-func (is Is) Err(err, target error, msg string, i ...interface{}) {
+// If no errors match target, the test fails.
+func (is Is) Err(err, target error, format string, args ...interface{}) {
 	if !errors.Is(err, target) {
-		is.T().Helper()
-		is(false, fmt.Sprintf("%s\nError `%s` is not `%s`", fmt.Sprintf(msg, i...), err, target))
+		is.t().Helper()
+		is.fail(errErrorNotMatch, fmt.Sprintf("Error `%s` is not `%s`", err, target), format, args...)
 	}
 }
 
 // Panic checks if calling the given function causes a panic.
 // If the given function does not panic the test fails.
-func (is Is) Panic(panicable func(), msg string, i ...interface{}) {
-	if !callPanic(panicable) {
-		is.T().Helper()
-		is(false, fmt.Sprintf("%s\nFunction did not panic", fmt.Sprintf(msg, i...)))
+func (is Is) Panic(fn func(), format string, i ...interface{}) {
+
+	var recovered bool
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				recovered = true
+			}
+		}()
+		fn()
+		return
+	}()
+
+	if !recovered {
+		is.t().Helper()
+		is.fail(errFuncNoPanic, "Function did not panic", format, i...)
 	}
 }
 
@@ -50,69 +64,83 @@ func (is Is) Panic(panicable func(), msg string, i ...interface{}) {
 // This is the equivalent of calling is.T().Log(msg).
 // This function can be called from multiple goroutines concurrently.
 func (is Is) Log(msg string, i ...interface{}) {
-	t := is.T()
+	t := is.t()
 	t.Helper()
 	t.Logf(msg, i...)
 }
 
-// Run runs the given test.
-func (is Is) Run(name string, f func(Is)) {
-	is.T().Run(name, func(t *testing.T) { f(New(t)) })
-}
+// Run runs the given sub test.
+// This runs testFn in a separate goroutine and blocks until f returns or calls is.T().Parallel to become a
+// parallel test.
+func (is Is) Run(name string, testFn func(Is)) { runT(is.t(), name, false, testFn) }
 
 // RunP runs the given test in parallel with the current test.
-func (is Is) RunP(name string, f func(Is)) {
-	is.T().Run(name, func(t *testing.T) { t.Parallel(); f(New(t)) })
-}
+func (is Is) RunP(name string, testFn func(Is)) { runT(is.t(), name, true, testFn) }
 
-// T gets the underlying *testing.T for this test.
-func (is Is) T() (t *testing.T) {
-	// This is a ugly hack to get the testing.T value from `is`.
-	// Calling `is(false, "", internalIsCall, **testing.T)` sets the the value to the given ptr.
+// t gets the underlying internal.T for this test.
+func (is Is) t() (t internal.T) {
+	// This is a hack to get the internal.T value from `is`.
+	// Calling `is(false, "", *internal.T)` sets the the value to the given ptr.
 	// This is done by calling `setT`.
-	is(false, "", internalIsCall, &t)
+	is(false, "", &t)
 	return
 }
 
-var internalIsCall = new(uint16)
+// T gets the underlying *testing.T for this test.
+func (is Is) T() *testing.T {
+	// this will panic when testing this package because T will be *internal.Test.
+	return is.t().(*testing.T)
+}
 
-func setT(t *testing.T, msg string, i []interface{}) (ok bool) {
-	if msg == "" && len(i) == 2 {
-		if i[0] == internalIsCall {
-			var dst **testing.T
-			if dst, ok = i[1].(**testing.T); ok {
-				*dst = t
-			}
-			return ok
+// fail fails the test.
+// Calling this function will cause the test to stop executing.
+// reason is the reason the test failed. format and i are user provided information about why the
+// test failed. The error value passed to this function is only used when testing this package.
+func (is Is) fail(err error, reason string, format string, i ...interface{}) {
+	t := is.t()
+	t.Helper()
+
+	// set the error. This value is used by tests to check if the test failed for the correct reason.
+	if internal, ok := t.(*internal.Test); ok {
+		internal.SetError(err)
+	}
+
+	t.Errorf(format, i...)
+	if reason != "" {
+		t.Error(reason)
+	}
+
+	t.FailNow()
+}
+
+func setT(t internal.T, msg string, i []interface{}) (ok bool) {
+	if msg == "" && len(i) == 1 {
+		var dst *internal.T
+		if dst, ok = i[0].(*internal.T); ok {
+			*dst = t
 		}
+		return ok
 	}
 	return
 }
 
-func callPanic(f func()) (recovered bool) {
-	defer func() {
-		if r := recover(); r != nil {
-			recovered = true
-		}
-	}()
-	f()
-	return
-}
-
 // New creates a new test
-func New(t *testing.T) Is {
+func New(t *testing.T) Is { return newIs(t) }
+
+func newIs(t internal.T) Is {
 	return func(cond bool, msg string, i ...interface{}) {
 		t.Helper()
 		if !cond {
 			if ok := setT(t, msg, i); ok { // see comment in is.T()
 				return
 			}
-			t.Errorf(msg, i...)
-			t.FailNow()
+
+			// set the error. This value is used by tests to check if the test failed for the correct reason.
+			if internal, ok := t.(*internal.Test); ok {
+				internal.SetError(errCondition)
+			}
+
+			t.Fatalf(msg, i...)
 		}
 	}
-}
-
-func init() {
-	deep.CompareUnexportedFields = true
 }
