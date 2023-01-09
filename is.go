@@ -89,10 +89,10 @@ func setT(t *testing.T, msg string, i []interface{}) (ok bool) {
 	return
 }
 
-func callPanic(f func()) (paniced bool) {
+func callPanic(f func()) (recovered bool) {
 	defer func() {
 		if r := recover(); r != nil {
-			paniced = true
+			recovered = true
 		}
 	}()
 	f()
