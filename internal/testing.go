@@ -45,15 +45,16 @@ func (t *Test) Cleanup(f func()) { t.CleanupFuncs = append(t.CleanupFuncs, f) }
 
 // Run adds a test to be run
 func (t *Test) Run(name string, parallel bool, f func(t *Test)) bool {
-	t.RunTests = append(t.RunTests, TestFn{Name: name, F: f})
+	t.RunTests = append(t.RunTests, TestFn{Name: name, Parallel: parallel, F: f})
 	f(t)
 	return true
 }
 
 // TestFn a test function passed to [Test.Run]
 type TestFn struct {
-	Name string
-	F    func(t *Test)
+	Name     string
+	Parallel bool
+	F        func(t *Test)
 }
 
 var errFatal = errors.New("fatal")

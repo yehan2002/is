@@ -66,7 +66,7 @@ func TestSuite(t *testing.T) {
 
 	result = internal.Run(func(t internal.T) { suite.Run(t) })
 	if result.Failed {
-		t.Fatal("suite failed") // this can never happen because internal.Test does not actually run the tests
+		t.Fatal("suite failed")
 	}
 
 	expectedRunOrder := []string{"TestA", "TestB", "TestX", "TestZ"}
@@ -77,13 +77,23 @@ func TestSuite(t *testing.T) {
 	}
 }
 
+func TestSuitFail(t *testing.T) {
+	result := internal.Run(func(t internal.T) { makeSuite(t, &testTest{testBFails: true}, false).Run(t) })
+	if !result.Failed {
+		t.Fatalf("Test should fail")
+	}
+	if result.FailMessage[0] != "failed" {
+		t.Fatalf("Incorrect test message")
+	}
+}
+
 func TestSuiteSetupTeardown(t *testing.T) {
 	var suite *testSuite
 	var testSuite = &testSetupTeardown{}
 
 	result := internal.Run(func(t internal.T) { suite = makeSuite(t, testSuite, false); suite.Run(t) })
 	if result.Failed {
-		t.Fatal("failed to run suite") // this is unreachable
+		t.Fatal("failed to run suite")
 	}
 
 	if !testSuite.setupCalled {
