@@ -1,4 +1,4 @@
-# Is
+# Is [![Go](https://github.com/yehan2002/is/actions/workflows/go.yml/badge.svg)](https://github.com/yehan2002/is/actions/workflows/go.yml)
 
 A lightweight testing framework for golang.
 
