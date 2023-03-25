@@ -1,4 +1,4 @@
-# Is [![Go](https://github.com/yehan2002/is/actions/workflows/go.yml/badge.svg)](https://github.com/yehan2002/is/actions/workflows/go.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/yehan2002/is/v2)](https://goreportcard.com/report/github.com/yehan2002/is/v2) [![Go Reference](https://pkg.go.dev/badge/github.com/yehan2002/is/v2.svg)](https://pkg.go.dev/github.com/yehan2002/is/v2)
+# Is [![Go](https://github.com/yehan2002/is/actions/workflows/go.yml/badge.svg)](https://github.com/yehan2002/is/actions/workflows/go.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/yehan2002/is/v2)](https://goreportcard.com/report/github.com/yehan2002/is/v2) [![codecov](https://codecov.io/gh/yehan2002/is/branch/v2/graph/badge.svg?token=I29DKX58GJ)](https://codecov.io/gh/yehan2002/is) [![Go Reference](https://pkg.go.dev/badge/github.com/yehan2002/is/v2.svg)](https://pkg.go.dev/github.com/yehan2002/is/v2)
 
 
 A lightweight testing framework for golang.
