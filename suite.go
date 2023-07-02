@@ -41,7 +41,7 @@ type testSuite struct {
 	setupFunc    func()
 	teardownFunc func()
 
-	options options
+	options *options
 
 	tests []*test
 }
@@ -65,7 +65,7 @@ func (s *testSuite) Run(t internal.T) {
 
 	for i := range s.tests {
 		test := s.tests[i]
-		runT(t, &s.options, test.Name, s.parallel, test.Func)
+		runT(t, s.options, test.Name, s.parallel, test.Func)
 	}
 }
 
@@ -97,8 +97,7 @@ func makeSuite(t internal.T, s interface{}, parallel bool, opts []Option) (testS
 		t.Fatalf(f, args...)
 	}
 
-	options := options{}
-	options.apply(opts...)
+	options := newOptions(opts)
 
 	t.Helper()
 

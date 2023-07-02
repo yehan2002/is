@@ -124,7 +124,7 @@ func (is Is) fail(err error, reason string, format string, i ...interface{}) {
 
 // New creates a new test
 func New(t *testing.T, opts ...Option) Is {
-	return newIs(t, new(options).apply(opts...))
+	return newIs(t, newOptions(opts))
 }
 
 type state struct {

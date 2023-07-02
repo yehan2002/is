@@ -1,6 +1,9 @@
 package is
 
 import (
+	"errors"
+	"fmt"
+	"math"
 	"testing"
 
 	"github.com/yehan2002/is/v2/internal"
@@ -18,9 +21,7 @@ type exportTest2 struct {
 func testEq(t *testing.T, v1, v2 interface{}, o ...Option) *internal.Test {
 	t.Helper()
 	result := internal.Run(func(it internal.T) {
-		opts := &options{}
-		opts.apply(o...)
-		newIs(it, opts).Equal(v1, v2, "Test")
+		newIs(it, newOptions(o)).Equal(v1, v2, "Test")
 	})
 	return result
 }
@@ -75,4 +76,43 @@ func TestOptionCmpUnexported(t *testing.T) {
 		t.Fatal("Test did not fail when v1 != v2")
 	}
 
+}
+
+func TestOptionEquateNaN(t *testing.T) {
+	result := testEq(t, math.NaN(), math.NaN(), EquateNaN(false))
+	if !result.Failed {
+		t.Fatal("NaN values were considered to be equal without EquateNaNs")
+	}
+
+	result = testEq(t, math.NaN(), math.NaN(), EquateNaN(true))
+	if result.Failed {
+		t.Fatal("NaN values were not considered to be equal with EquateNaNs")
+	}
+}
+
+func TestOptionEquateEmpty(t *testing.T) {
+	result := testEq(t, []byte(nil), []byte{}, EquateEmpty(false))
+	if !result.Failed {
+		t.Fatal("[]byte(nil) and []byte{} should not be equal")
+	}
+
+	result = testEq(t, []byte(nil), []byte{}, EquateEmpty(true))
+	if result.Failed {
+		t.Fatal("[]byte(nil) and []byte{} were not considered to be equal with EquateEmpty")
+	}
+}
+
+func TestOptionEquateErrors(t *testing.T) {
+	err1 := errors.New("err1")
+	err2 := fmt.Errorf("err2: %w", err1)
+
+	result := testEq(t, err1, err2, EquateErrors(false))
+	if !result.Failed {
+		t.Fatal("err1 and err2 should not be equal")
+	}
+
+	result = testEq(t, err1, err2, EquateErrors(true))
+	if result.Failed {
+		t.Fatal("err1 and err2 were not considered to be equal with EquateErrors")
+	}
 }
