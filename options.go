@@ -16,7 +16,7 @@ func CmpAllUnexported() Option {
 	return func(o *options) { o.cmpAllUnexported = true }
 }
 
-// CmpUnexported allows comparing unexported fields that have the type of T.
+// CmpUnexported allows comparing unexported fields of the given struct types.
 func CmpUnexported(types ...interface{}) Option {
 	return func(o *options) {
 		if o.cmpUnexportedMap == nil {
