@@ -19,7 +19,7 @@ type cmpIgnore struct {
 
 // mustFail tests if calling fn causes the test to fail with the given error
 func mustFail(t *testing.T, err error, fn func(is Is)) {
-	result := internal.Run(func(t internal.T) { fn(newIs(t)) })
+	result := internal.Run(func(t internal.T) { fn(newIs(t, &options{})) })
 	if !result.Failed {
 		t.Fatal("Test did not fail")
 	}
@@ -30,7 +30,7 @@ func mustFail(t *testing.T, err error, fn func(is Is)) {
 
 // mustPass tests if calling fn does not cause the test to fail
 func mustPass(t *testing.T, fn func(is Is)) {
-	result := internal.Run(func(t internal.T) { fn(newIs(t)) })
+	result := internal.Run(func(t internal.T) { fn(newIs(t, &options{})) })
 	if result.Failed {
 		t.Fatalf("Test failed: %s", strings.Join(result.FailMessage, "\n"))
 	}

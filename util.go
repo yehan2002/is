@@ -8,7 +8,7 @@ import (
 	"github.com/yehan2002/is/v2/internal"
 )
 
-// internal errors used for tests
+// internal errors used for testing this package
 var (
 	errNilSuite        = errors.New("test suite is nil")
 	errMethodSignature = errors.New("invalid method signature for Setup/Teardown")
@@ -21,7 +21,9 @@ var (
 	errCondition     = errors.New("condition was not true")
 )
 
-func runT(t internal.T, name string, parallel bool, fn func(Is)) {
+// runT runs the given test function using [*testing.T].
+// If the package is being tested, [internal.Test] is used instead.
+func runT(t internal.T, opts *options, name string, parallel bool, fn func(Is)) {
 	if testingT, ok := t.(*testing.T); ok {
 		testingT.Run(name, func(t *testing.T) {
 			t.Helper()
@@ -29,25 +31,14 @@ func runT(t internal.T, name string, parallel bool, fn func(Is)) {
 				t.Parallel()
 			}
 
-			fn(newIs(t))
+			fn(newIs(t, opts))
 		})
 	} else if internalT, ok := t.(*internal.Test); ok {
-		internalT.Run(name, parallel, func(t *internal.Test) { fn(newIs(t)) })
+		internalT.Run(name, parallel, func(t *internal.Test) { fn(newIs(t, opts)) })
 	}
 
 }
 
-func cmpValue(v1, v2 interface{}) string {
-	return cmp.Diff(v1, v2, cmp.FilterPath(func(p cmp.Path) bool {
-		sf, ok := p.Index(-1).(cmp.StructField)
-		if !ok {
-			return false
-		}
-
-		field := p.Index(-2).Type().Field(sf.Index())
-		isExported := field.PkgPath == ""
-
-		return !isExported || field.Tag != "" &&
-			(field.Tag.Get("deep") == "-" || field.Tag.Get("cmp") == "-")
-	}, cmp.Ignore()))
+func cmpValue(v1, v2 interface{}, options *options) string {
+	return cmp.Diff(v1, v2, options.CmpOpts()...)
 }

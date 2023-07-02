@@ -32,7 +32,7 @@ type testSetupTeardownIncorrect struct{}
 func (t *testSetupTeardownIncorrect) Setup() error { return nil }
 
 func TestSuiteNil(t *testing.T) {
-	result := internal.Run(func(t internal.T) { makeSuite(t, nil, false) })
+	result := internal.Run(func(t internal.T) { makeSuite(t, nil, false, nil) })
 	if !result.Failed || !errors.Is(result.TestError, errNilSuite) {
 		t.Fatalf("makeSuite allowed a nil test suite: %s", result.FailMessage)
 	}
@@ -42,7 +42,7 @@ func TestSuite(t *testing.T) {
 	var suite *testSuite
 	var testSuite = &testTest{}
 
-	result := internal.Run(func(t internal.T) { suite = makeSuite(t, testSuite, false) })
+	result := internal.Run(func(t internal.T) { suite = makeSuite(t, testSuite, false, nil) })
 	if result.Failed {
 		t.Fatal("makeSuite failed for a valid suite")
 	}
@@ -78,7 +78,7 @@ func TestSuite(t *testing.T) {
 }
 
 func TestSuitFail(t *testing.T) {
-	result := internal.Run(func(t internal.T) { makeSuite(t, &testTest{testBFails: true}, false).Run(t) })
+	result := internal.Run(func(t internal.T) { makeSuite(t, &testTest{testBFails: true}, false, nil).Run(t) })
 	if !result.Failed {
 		t.Fatalf("Test should fail")
 	}
@@ -91,7 +91,7 @@ func TestSuiteSetupTeardown(t *testing.T) {
 	var suite *testSuite
 	var testSuite = &testSetupTeardown{}
 
-	result := internal.Run(func(t internal.T) { suite = makeSuite(t, testSuite, false); suite.Run(t) })
+	result := internal.Run(func(t internal.T) { suite = makeSuite(t, testSuite, false, nil); suite.Run(t) })
 	if result.Failed {
 		t.Fatal("failed to run suite")
 	}
@@ -104,14 +104,14 @@ func TestSuiteSetupTeardown(t *testing.T) {
 		t.Fatal("Cleanup function was not added")
 	}
 
-	result = internal.Run(func(t internal.T) { suite = makeSuite(t, &testSetupTeardownIncorrect{}, false); suite.Run(t) })
+	result = internal.Run(func(t internal.T) { suite = makeSuite(t, &testSetupTeardownIncorrect{}, false, nil); suite.Run(t) })
 	if !result.Failed || !errors.Is(result.TestError, errMethodSignature) {
 		t.Fatalf("allowed test suite with invalid setup function: %s", result.FailMessage)
 	}
 }
 
 func TestSuiteReceiver(t *testing.T) {
-	result := internal.Run(func(t internal.T) { makeSuite(t, testTest{}, false) })
+	result := internal.Run(func(t internal.T) { makeSuite(t, testTest{}, false, nil) })
 	if !result.Failed || !errors.Is(result.TestError, errReceiver) {
 		t.Fatalf("allowed suite with pointer receivers to be created from struct value")
 	}

@@ -23,15 +23,15 @@ import (
 //
 //	func (s *suiteName) Setup(){ /* setup the set suite here */ }
 //	func (s *suiteName) Teardown(){ /* clean up after the test suite has completed. */ }
-func Suite(t *testing.T, suite interface{}) {
+func Suite(t *testing.T, suite interface{}, opts ...Option) {
 	t.Helper()
-	makeSuite(t, suite, false).Run(t)
+	makeSuite(t, suite, false, opts).Run(t)
 }
 
 // SuiteP like [Suite] but calls all test function in parallel.
-func SuiteP(t *testing.T, suite interface{}) {
+func SuiteP(t *testing.T, suite interface{}, opts ...Option) {
 	t.Helper()
-	makeSuite(t, suite, true).Run(t)
+	makeSuite(t, suite, true, opts).Run(t)
 }
 
 type testSuite struct {
@@ -40,6 +40,8 @@ type testSuite struct {
 
 	setupFunc    func()
 	teardownFunc func()
+
+	options options
 
 	tests []*test
 }
@@ -63,11 +65,11 @@ func (s *testSuite) Run(t internal.T) {
 
 	for i := range s.tests {
 		test := s.tests[i]
-		runT(t, test.Name, s.parallel, test.Func)
+		runT(t, &s.options, test.Name, s.parallel, test.Func)
 	}
 }
 
-func makeSuite(t internal.T, s interface{}, parallel bool) (testS *testSuite) {
+func makeSuite(t internal.T, s interface{}, parallel bool, opts []Option) (testS *testSuite) {
 	// calledFatal indicates that t.Fatal was called.
 	// This is used to differentiate between t.Fatal calling runtime.Goexit and a panic in the code bellow.
 	var calledFatal bool
@@ -87,13 +89,16 @@ func makeSuite(t internal.T, s interface{}, parallel bool) (testS *testSuite) {
 		t.Helper()
 		calledFatal = true
 
-		// the package is being tested, set the error to be verified by the test.
+		// this package is being tested, set the error to be verified by the test.
 		if internal, ok := t.(*internal.Test); ok {
 			internal.SetError(err)
 		}
 
 		t.Fatalf(f, args...)
 	}
+
+	options := options{}
+	options.apply(opts...)
 
 	t.Helper()
 
@@ -103,7 +108,7 @@ func makeSuite(t internal.T, s interface{}, parallel bool) (testS *testSuite) {
 	}
 
 	suiteType := suite.Type()
-	testS = &testSuite{name: suite.Type().Name(), parallel: parallel}
+	testS = &testSuite{name: suite.Type().Name(), parallel: parallel, options: options}
 
 	// check if the caller passed a value instead of a pointer to a value by accident.
 	// If any methods on the type have a pointer receiver, they cannot be called because `suite` is not
