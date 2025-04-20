@@ -39,6 +39,15 @@ func (is Is) Err(err, target error, format string, args ...interface{}) {
 	}
 }
 
+// Ok checks if the error is nil.
+// If the error is not nil, the test fails.
+func (is Is) Ok(err error, format string, args ...interface{}) {
+	if err != nil {
+		is.t().Helper()
+		is.fail(errErrNotNil, fmt.Sprintf("Error `%s` is not nil", err), format, args...)
+	}
+}
+
 // Panic checks if calling the given function causes a panic.
 // If the given function does not panic the test fails.
 func (is Is) Panic(fn func(), format string, i ...interface{}) {
@@ -52,7 +61,6 @@ func (is Is) Panic(fn func(), format string, i ...interface{}) {
 			}
 		}()
 		fn()
-		return
 	}()
 
 	if !recovered {

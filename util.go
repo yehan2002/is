@@ -16,6 +16,7 @@ var (
 
 	errCalledFail    = errors.New("Fail() was called")
 	errErrorNotMatch = errors.New("error did not match")
+	errErrNotNil     = errors.New("error is not nil")
 	errFuncNoPanic   = errors.New("function did not panic")
 	errNotEqual      = errors.New("values are not equal")
 	errCondition     = errors.New("condition was not true")

@@ -92,4 +92,7 @@ func TestIs(t *testing.T) {
 		is.Run("name", func(i Is) {})
 		is.RunP("name", func(i Is) {})
 	})
+
+	mustFail(t, errErrNotNil, func(is Is) { is.Ok(os.ErrClosed, "this should fail") })
+	mustPass(t, func(is Is) { is.Ok(nil, "this should fail") })
 }
